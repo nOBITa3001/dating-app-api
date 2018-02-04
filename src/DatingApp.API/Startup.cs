@@ -36,25 +36,31 @@ namespace DatingApp.API
             (
                 db => db.UseSqlite(Configuration.GetConnectionString("DefaultConnection"))
             );
-            services.AddMvc();
+            services
+                .AddMvc()
+                .AddJsonOptions(opt =>
+                {
+                    opt.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
+                });
             services.AddCors();
             services.AddScoped<IAuthRepository, AuthRepository>();
             services.AddScoped<IDatingRepository, DatingRepository>();
             var key = Encoding.ASCII.GetBytes(Configuration.GetSection("AppSettings:Token").Value);
-            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                    .AddJwtBearer
-                    (
-                        options =>
+            services
+                .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                .AddJwtBearer
+                (
+                    options =>
+                    {
+                        options.TokenValidationParameters = new TokenValidationParameters
                         {
-                            options.TokenValidationParameters = new TokenValidationParameters
-                            {
-                                ValidateIssuerSigningKey = true,
-                                IssuerSigningKey = new SymmetricSecurityKey(key),
-                                ValidateIssuer = false,
-                                ValidateAudience = false
-                            };
-                        }
-                    );
+                            ValidateIssuerSigningKey = true,
+                            IssuerSigningKey = new SymmetricSecurityKey(key),
+                            ValidateIssuer = false,
+                            ValidateAudience = false
+                        };
+                    }
+                );
 
             services.AddTransient<Seed>();
         }
