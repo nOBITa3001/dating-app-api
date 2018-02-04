@@ -89,7 +89,7 @@ namespace DatingApp.API
             app.UseAuthentication();
             app.UseMvc();
 
-            seeder.SeedUsers();
+            //seeder.SeedUsers();
         }
     }
 }
