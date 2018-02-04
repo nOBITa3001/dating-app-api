@@ -54,10 +54,12 @@ namespace DatingApp.API
                             };
                         }
                     );
+
+            services.AddTransient<Seed>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, Seed seeder)
         {
             if (env.IsDevelopment())
             {
@@ -80,13 +82,14 @@ namespace DatingApp.API
                     });
                 });
             }
-
             app.UseCors(a => a.AllowAnyHeader()
                               .AllowAnyMethod()
                               .AllowAnyOrigin()
                               .AllowCredentials());
             app.UseAuthentication();
             app.UseMvc();
+
+            seeder.SeedUsers();
         }
     }
 }
