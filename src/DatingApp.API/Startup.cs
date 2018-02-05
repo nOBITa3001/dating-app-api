@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using AutoMapper;
 using DatingApp.API.Data;
 using DatingApp.API.Helpers;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -36,28 +37,38 @@ namespace DatingApp.API
             (
                 db => db.UseSqlite(Configuration.GetConnectionString("DefaultConnection"))
             );
-            services.AddMvc();
+            services
+                .AddMvc()
+                .AddJsonOptions(opt =>
+                {
+                    opt.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
+                });
             services.AddCors();
+            services.AddAutoMapper();
             services.AddScoped<IAuthRepository, AuthRepository>();
+            services.AddScoped<IDatingRepository, DatingRepository>();
             var key = Encoding.ASCII.GetBytes(Configuration.GetSection("AppSettings:Token").Value);
-            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                    .AddJwtBearer
-                    (
-                        options =>
+            services
+                .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                .AddJwtBearer
+                (
+                    options =>
+                    {
+                        options.TokenValidationParameters = new TokenValidationParameters
                         {
-                            options.TokenValidationParameters = new TokenValidationParameters
-                            {
-                                ValidateIssuerSigningKey = true,
-                                IssuerSigningKey = new SymmetricSecurityKey(key),
-                                ValidateIssuer = false,
-                                ValidateAudience = false
-                            };
-                        }
-                    );
+                            ValidateIssuerSigningKey = true,
+                            IssuerSigningKey = new SymmetricSecurityKey(key),
+                            ValidateIssuer = false,
+                            ValidateAudience = false
+                        };
+                    }
+                );
+
+            services.AddTransient<Seed>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, Seed seeder)
         {
             if (env.IsDevelopment())
             {
@@ -80,13 +91,14 @@ namespace DatingApp.API
                     });
                 });
             }
-
             app.UseCors(a => a.AllowAnyHeader()
                               .AllowAnyMethod()
                               .AllowAnyOrigin()
                               .AllowCredentials());
             app.UseAuthentication();
             app.UseMvc();
+
+            //seeder.SeedUsers();
         }
     }
 }
